@@ -53,14 +53,14 @@ void Planet::GetRotationAxis(std::fstream &fs)  {
         fs >> i;
     normalize(RawRotationAxis,RotationAxis,3);
 }
-void Planet::InitializationPhaseSpace( int step) {
+void Planet::InitializationPhaseSpace( int step,int position) {
     Position = new double[3*step];
     Velocity = new double[3*step];
     for(int i=0;i<3;i++) {
-        Position[i*step] = InitialPosition[i];
+        Position[i*step+position] = InitialPosition[i];
     }
     for(int i=0;i<3;i++) {
-        Velocity[i*step] = InitialVelocity[i];
+        Velocity[i*step+position] = InitialVelocity[i];
     }
     DataLength=step;
 }

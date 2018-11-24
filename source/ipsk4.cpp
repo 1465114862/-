@@ -44,6 +44,16 @@ void VelocityUpdate(Planet *Planets,int planetcount,int next,int step) {
     for(int i=0;i<planetcount;i++)
         vplus(Planets[i].Velocity+next-1,Planets[i].dp,Planets[i].Velocity+next,3,step,1,step);
 }
+//更新位置
+void reversePositionUpdate(Planet *Planets,int planetcount,int next,int step) {
+    for(int i=0;i<planetcount;i++)
+        vplus(Planets[i].Position+next+1,Planets[i].dq,Planets[i].Position+next,3,step,1,step);
+}
+//更新速度
+void reverseVelocityUpdate(Planet *Planets,int planetcount,int next,int step) {
+    for(int i=0;i<planetcount;i++)
+        vplus(Planets[i].Velocity+next+1,Planets[i].dp,Planets[i].Velocity+next,3,step,1,step);
+}
 //内插得到所有行星的解
 void SplineAll(Planet *Planets,int planetcount,double *XSource) {
     for(int i=0;i<planetcount;i++)
@@ -56,23 +66,34 @@ void ClearAllPositon(Planet *Planets,int planetcount) {
 }
 //对于行星的ISPRK4求解器
 void ISPRK4ForPlanets(Planet *Planets,int planetcount,int step, double h) {
-    double w = (2 + pow(2, 1.0 / 3) + 1 / pow(2, 1.0 / 3)) / 3,XSource[step];
+    int revesStep=int(step/100)+1,rStep=step+revesStep;
+    double w = (2 + pow(2, 1.0 / 3) + 1 / pow(2, 1.0 / 3)) / 3,XSource[rStep];
     double v = 1 - 2 * w,b[4] = {w, v, w, 0},B[4] = {w / 2, (w + v) / 2, (w + v) / 2, w / 2},hB[4],hb[4];
-    for(int i=0;i<step;i++)
-        XSource[i]=i*h;
+    for(int i=0;i<rStep;i++)
+        XSource[i]=(i-revesStep)*h;
     ndot(B,hB,h,4);
     ndot(b,hb,h,4);
     for(int i=0;i<planetcount;i++)
-        Planets[i].InitializationPhaseSpace(step);
-    for(int i=0;i<step-1;i++) {
+        Planets[i].InitializationPhaseSpace(rStep,revesStep);
+    for(int i=revesStep;i<rStep-1;i++) {
         ClearAlldpdq(Planets,planetcount);
         for(int j=0;j<4;j++) {
-            dqUpdate(Planets,planetcount,i,step,hB[j]);
+            dqUpdate(Planets,planetcount,i,rStep,hB[j]);
             if(hb[j]!=0)
-                dpUpdate(Planets,planetcount,i,step,hb[j]);
+                dpUpdate(Planets,planetcount,i,rStep,hb[j]);
         }
-        PositionUpdate(Planets,planetcount,i+1,step);
-        VelocityUpdate(Planets,planetcount,i+1,step);
+        PositionUpdate(Planets,planetcount,i+1,rStep);
+        VelocityUpdate(Planets,planetcount,i+1,rStep);
+    }
+    for(int i=revesStep;i>0;i--) {
+        ClearAlldpdq(Planets,planetcount);
+        for(int j=0;j<4;j++) {
+            dqUpdate(Planets,planetcount,i,rStep,-hB[j]);
+            if(hb[j]!=0)
+                dpUpdate(Planets,planetcount,i,rStep,-hb[j]);
+        }
+        reversePositionUpdate(Planets,planetcount,i-1,rStep);
+        reverseVelocityUpdate(Planets,planetcount,i-1,rStep);
     }
     SplineAll(Planets,planetcount,XSource);
     ClearAllPositon(Planets,planetcount);
