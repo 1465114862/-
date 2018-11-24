@@ -21,7 +21,7 @@ public:
     void GetParameter(std::fstream &fs);//读取行星参数
     void GetRawInformation(std::fstream &fs);//读取原初始数据(游戏中得到)
     void GetRotationAxis(std::fstream &fs);//读取自转轴数据(游戏中得到)
-    void InitializationPhaseSpace(int step);//求解前初始化
+    void InitializationPhaseSpace(int step,int position);//求解前初始化
     void ClearAcceleration();//清除加速度缓存
     void Cleardpdq();//清除坐标和动量空间增量缓存
     void ClearPositon();//解出方程后清除数据点存储
