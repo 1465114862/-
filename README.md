@@ -19,3 +19,27 @@ planet.h
 planet.cpp
 
 ipsk4.cpp
+
+18.11.29
+
+-修正了关闭窗口无法删去节点的bug
+
+-修正了调节倍数时的bug
+
+-在Probe类重新计算前清除数据，防止出现不可预测的bug
+
+我想了想要不要给条样插值函数加上越界检测，我个人认为对于调用如此频繁的类不应该从类中进行错误检测，而应该由不同情况在类外决定错误检测方式，以保证计算速度。
+
+更改文件：
+
+probe.h
+
+singlemaneuwinget.h
+
+probe.cpp
+
+slidernum.cpp
+
+singlemaneuwinget.cpp
+
+singlewinget.cpp
