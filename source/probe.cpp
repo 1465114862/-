@@ -529,6 +529,7 @@ void Probe::Gamma3ISPRK4ForProbe(Planet *Planets,int planetcount,int step, doubl
     GetSpline(&T[SplineStart]);
 }
 void Probe::Gamma3SolveOrbit(Planet *Planets,int planetcount,int step, double epsilon,double tmax) {
+    dataRefresh();
     tGroup=new double[maneuver.length+2];
     StepRunOut=false;
     tGroup[0]=0;
@@ -584,6 +585,17 @@ double Probe::getW(int number,Planet *Planets,int planetcount) {
     Gamma3ClearAcceleration();
     Gamma3ProbeAcceleration(Planets,planetcount);
     return norm(acceleration,3,1);
+}
+void Probe::dataRefresh() {
+    safeDelete(tGroup);
+    safeDelete(W);
+    safeDelete(T);
+    safeDelete(Position);
+    safeDelete(Velocity);
+    safeDelete(tau);
+    safeDelete(p0);
+    safeDelete(SplinePosition);
+    safeDelete(SplineVelocity);
 }
 void Gamma3J2Coefficient(double *f,double *r,double *j, double j2, double d,double sqrtd,double &Vt,double *vp) {
     double c=vdot(j,r,3,1,1),e=j2/(d*d*sqrtd),a=3*c*e,b=3*e*(1-5*c*c/d)*0.5,g;

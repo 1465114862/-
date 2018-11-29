@@ -3,7 +3,6 @@
 #include "mainwindow.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-
 SingleWinget::SingleWinget(MainWindow *mw,Calculator *icalculate,std::vector<std::string> itoPlot)
   : mainWindow(mw),
     calculate(icalculate),
@@ -49,7 +48,7 @@ void SingleWinget::addManueWidget() {
     manue.push_back(newm);
     manueIterator=manue.end();
     manueIterator--;
-    *manueIterator=new SingleManeuWinget(&(*manueIterator));
+    *manueIterator=new SingleManeuWinget();
 }
 
 void SingleWinget::replot() {
@@ -65,7 +64,9 @@ void SingleWinget::replot() {
 
 void SingleWinget::clearUpManue() {
     for(manueIterator=manue.begin();manueIterator!=manue.end();manueIterator++){
-        if((*manueIterator)==0)
+        if((*manueIterator)->isClosed()){
+            delete (*manueIterator);
             manue.erase(manueIterator);
+        }
     }
 }

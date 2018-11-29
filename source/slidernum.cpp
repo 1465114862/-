@@ -22,7 +22,7 @@ slidernum::slidernum(double *iv,double it,QString ina)
     slider->setTickPosition(QSlider::TicksRight);
     slider->setValue(0);
     QString num0;
-    num0.setNum(*value);
+    num0.setNum((*value),'g',15);
     lineEdit = new QLineEdit(num0);
     add=0;
     label=new QLabel;
@@ -72,7 +72,7 @@ void slidernum::addChange(double iadd) {
 void slidernum::changeValue() {
     (*value)+=(add>0 ? times*pow(10,add/500) : -times*pow(10,-add/500));
     QString num;
-    num.setNum((*value));
+    num.setNum((*value),'g',15);
     emit valueChanged(num);
 }
 
@@ -81,5 +81,5 @@ void slidernum::textChangeValue() {
 }
 
 void slidernum::changeTimes() {
-    times=lineEdit->text().toDouble();
+    times=lineEdit2->text().toDouble();
 }

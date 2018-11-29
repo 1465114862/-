@@ -3,10 +3,11 @@
 #include <QApplication>
 #include <QDesktopWidget>
 #include "mainwindow.h"
+#include <QMessageBox>
 
-SingleManeuWinget::SingleManeuWinget(SingleManeuWinget **itothis,QWidget *parent)
-    : tothis(itothis)
+SingleManeuWinget::SingleManeuWinget(QWidget *parent)
 {
+    closed=false;
     maneu.t=0;
     maneu.v[0]=0;
     maneu.v[1]=0;
@@ -22,13 +23,14 @@ SingleManeuWinget::SingleManeuWinget(SingleManeuWinget **itothis,QWidget *parent
     layout->addWidget(vz);
     setLayout(layout);
     setWindowTitle(tr("maneu"));
-    connect(this,&QObject::destroyed,this,&SingleManeuWinget::deletePointer);
     show();
 }
 
-void SingleManeuWinget::deletePointer() {
-    *tothis=NULL;
+void SingleManeuWinget::closeEvent(QCloseEvent *event) {
+    closed=true;
 }
+
+bool SingleManeuWinget::isClosed() {return closed;}
 
 SingleManeuver SingleManeuWinget::getManeu() {
     return maneu;
