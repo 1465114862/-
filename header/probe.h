@@ -63,7 +63,15 @@ public:
     void Gamma3ISPRK4ForProbe(Planet *Planets,int planetcount,int step, double epsilon,double tmax,double tbegin);
     void Gamma3SolveOrbit(Planet *Planets,int planetcount,int step, double epsilon,double tmax);
     double getW(int number,Planet *Planets,int planetcount);
+    void dataRefresh();
 };
+template<class T>
+void safeDelete(T p) {
+    if(!p) {
+        delete []p;
+        p=0;
+    }
+}
 void Gamma3J2Coefficient(double *f,double *r,double *j, double j2, double d,double sqrtd,double &Vt,double *vp);
 
 #endif // PROBE_H

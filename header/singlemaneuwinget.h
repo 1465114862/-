@@ -10,12 +10,13 @@ class SingleManeuWinget : public QWidget
 {
     Q_OBJECT
 public:
-    SingleManeuWinget(SingleManeuWinget **itothis,QWidget *parent = 0);
+    SingleManeuWinget(QWidget *parent = 0);
     SingleManeuver getManeu();
+    bool isClosed();
 public slots:
-    void deletePointer();
+    void closeEvent(QCloseEvent *event) override;
 private:
-    SingleManeuWinget **tothis;
+    bool closed;
     SingleManeuver maneu;
     slidernum *t,*vx,*vy,*vz;
 };
