@@ -1,4 +1,5 @@
 #include "plot.h"
+#include <iostream>
 
 //画图时原点与范围转换
 void GLCoordinatesTransform(const double *a,const double *b,const double *c,GLfloat *vertices,int maxwide,int length) {
@@ -24,14 +25,20 @@ void GlPlot3D::plot() {
     double h=tmax/(minstep-1),r1[3],r2[3],rtmax=1/tmax;
     double4 cache,cache1,cache2;
     step=minstep;
+    data.clear();
     try {
-        for(int i=0;i<step;i++) {
+        for(int i=0;i<step-1;i++) {
             cache.v[0]=h*i;
             cache.v[1]=(*fx)(cache.v[0]);
             cache.v[2]=(*fy)(cache.v[0]);
             cache.v[3]=(*fz)(cache.v[0]);
             data.push_back(cache);
         }
+        cache.v[0]=tmax;
+        cache.v[1]=(*fx)(cache.v[0]);
+        cache.v[2]=(*fy)(cache.v[0]);
+        cache.v[3]=(*fz)(cache.v[0]);
+        data.push_back(cache);
     } catch(std::out_of_range) {}
     dataIterator=data.begin();
     cache1=*(dataIterator);
@@ -58,13 +65,13 @@ void GlPlot3D::plot() {
             cache2=cache;
             vminus(&(cache2.v[1]),&(cache1.v[1]),r2,3);
             dataIterator--;
-            step+=2;
         }
         else {
             cache1=cache2;
             cache2=*(dataIterator);
         }
     }
+    step=data.size();
     vertices=new double[3*step];
     normedT=new GLfloat[step];
     dataIterator=data.begin();

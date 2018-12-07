@@ -3,18 +3,6 @@
 #include "spline.h"
 #include <fstream>
 #include <stdexcept>
-//txt文档读取单词
-void GetWord(std::fstream &fs,char *word,int MaxLength) {
-    int end=0;
-    for(int i=0;i<MaxLength;i++) {
-        if (end==0)
-            fs.get(*(word+i));
-        else
-            *(word+i)= ' ';
-        if (*(word+i)== ' ')
-            end=1;
-    }
-}
 //得到行星数量(pcount.txt)
 int GetPlanetCount(std::string Location) {
     int planetcount;
@@ -30,13 +18,13 @@ void Planet::GetMaxPlanetNameLength(int length) {
     MaxPlanetNameLength=length;
 }
 void Planet::GetName(std::fstream &fs) {
-    name=new char[MaxPlanetNameLength];
-    GetWord(fs,name,MaxPlanetNameLength);
+    fs>>name;
 }
 void Planet::GetParameter(std::fstream &fs) {
     fs>>mass;
     fs>>j2;
     fs>>radius;
+    fs>>crashRadius;
     J2=j2*radius*radius;
     JJ2=J2*mass;
     IsSphericalSymmetry= j2 == 0;

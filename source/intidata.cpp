@@ -14,22 +14,17 @@ void GetPlanetData(Planet * Planets,int planetcount,std::string Location) {
     indata.close();
 }
 //从名字得到行星编号
-int NameToNumber(const char *name,Planet *Planets,int MaxLength,int planetcount) {
-    int i;
+int NameToNumber(const std::string name,Planet *Planets,int planetcount) {
     for(int j=0;j<planetcount;j++) {
-        for(i=0;i<planetcount;i++) {
-            if(*(name+i)!=*(((*(Planets+j)).name)+i))
-                break;
-        }
-        if (i==MaxLength)
+        if (name==(*(Planets+j)).name)
             return j;
     }
     return -1;
 }
 //读取初始数据(data.txt)
-void GetInitialData(Planet *Planets,int planetcount,int MaxPlanetNameLength,std::string Location) {
+void GetInitialData(Planet *Planets,int planetcount,std::string Location) {
     int soibody;
-    char soiname[MaxPlanetNameLength];
+    std::string soiname;
     std::fstream indata;
     indata.open(Location+R"(\data.txt)", std::ios::in);
     if (!indata.is_open())
@@ -39,16 +34,11 @@ void GetInitialData(Planet *Planets,int planetcount,int MaxPlanetNameLength,std:
     for(int i=0;i<planetcount;i++)
         (*(Planets+i)).GetRotationAxis(indata);
     indata.get();
-    GetWord(indata, soiname, MaxPlanetNameLength);
-    soibody = NameToNumber(soiname, Planets, MaxPlanetNameLength, planetcount);
+    indata>>soiname;
+    soibody = NameToNumber(soiname, Planets,planetcount);
     for(int i=0;i<planetcount;i++)
         ((*(Planets+i)).IsSoibody)= i == soibody;
     indata.close();
-}
-//初始化所有行星名字最长长度
-void GetAllMaxLength(Planet *Planets,int planetcount,int MaxPlanetNameLength){
-    for(int i=0;i<planetcount;i++)
-        (*(Planets+i)).GetMaxPlanetNameLength(MaxPlanetNameLength);
 }
 //得到中心天体编号(游戏设定)
 int GetSoibody(Planet *Planets,int planetcount) {
@@ -104,10 +94,9 @@ void PhaseSpaceProcess_2(Planet *Planets,int planetcount,Probe &CenterOfMass) {
     }
 }
 //全部初始化
-void InitializationPlanets(Planet *Planets,int planetcount,int MaxPlanetNameLength,Probe &CenterOfMass,std::string Location){
-    GetAllMaxLength(Planets,planetcount,MaxPlanetNameLength);
+void InitializationPlanets(Planet *Planets,int planetcount,Probe &CenterOfMass,std::string Location){
     GetPlanetData(Planets,planetcount,Location);
-    GetInitialData(Planets,planetcount,MaxPlanetNameLength,Location);
+    GetInitialData(Planets,planetcount,Location);
     PhaseSpaceProcess_1(Planets,planetcount);
     GetCenterOfMass(Planets,CenterOfMass,planetcount);
     PhaseSpaceProcess_2(Planets,planetcount,CenterOfMass);

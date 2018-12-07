@@ -1,8 +1,7 @@
 #include "calculator.h"
 #include "reference.h"
-Calculator::Calculator(std::string iLocation,int iMaxPlanetNameLength,int iPlanetStep,double iPlanetH)
+Calculator::Calculator(std::string iLocation,int iPlanetStep,double iPlanetH)
     :Location(iLocation)
-    ,MaxPlanetNameLength(iMaxPlanetNameLength)
     ,PlanetStep(iPlanetStep)
     ,PlanetH(iPlanetH)
 {
@@ -13,9 +12,12 @@ void Calculator::resetLocation(std::string iLocation) {
 void Calculator::getData() {
     planetcount=GetPlanetCount(Location);
     Planets=new Planet[planetcount];
-    InitializationPlanets(&Planets[0],planetcount,MaxPlanetNameLength,CenterOfMass,Location);
+    InitializationPlanets(&Planets[0],planetcount,CenterOfMass,Location);
     InitializationOriginalProbe(CenterOfMass,OriginalProbe);
     OriginalProbe.name="OriginalProbe";
+    for(int i=0;i<planetcount;i++){
+        planetIndex.insert(std::pair<std::string,int> ((*(Planets+i)).name,i));
+    }
     probes.push_back(OriginalProbe);
     probeIndex.insert(std::pair<std::string,Probe*> (probes.at(0).name,&(probes.at(0))));
 }
@@ -35,8 +37,8 @@ void Calculator::NewSolveProbe(Probe &probe,int step,double epsilon,double tmax)
 void Calculator::Gamma3SolveProbe(Probe &probe,int step,double epsilon,double tmax) {
     probe.Gamma3SolveOrbit(Planets,planetcount,step,epsilon,tmax);
 }
-void Calculator::probeRelativeOrbit(int step,int maxwide,int i,int j,double tmax,Probe &probe,double minCosTheta) {
-    ProbeCoordinatesTransform <Planet,Planet,Probe> Orbit_1(Planets[i],Planets[j],probe);
+void Calculator::probeRelativeOrbit(int step,int maxwide,int i,int j,double tmax,Probe &probe,double minCosTheta,referenceOrigin origin,referenceRotate rotate) {
+    ProbeCoordinatesTransform <Planet,Planet,Probe> Orbit_1(Planets[i],Planets[j],probe,origin,rotate);
     std::function<double (double)> fx = [&](double t)->double{return Orbit_1.value(0,t);};
     std::function<double (double)> fy = [&](double t)->double{return Orbit_1.value(1,t);};
     std::function<double (double)> fz = [&](double t)->double{return Orbit_1.value(2,t);};
@@ -67,4 +69,16 @@ std::vector<double> Calculator::getScaleAndOrigin(std::string name) {
 GlPlot3D *Calculator::getPlot3D(std::string name) {
     probeIndexIter=probeIndex.find(name);
     return probeIndexIter->second->probeplot;
+}
+
+int Calculator::planetToIndex(std::string name) {
+    return planetIndex.find(name)->second;
+}
+
+std::string Calculator::indexToPlanets(int index) {
+    return (*(Planets+index)).name;
+}
+
+int Calculator::getPlanetcount() {
+    return planetcount;
 }

@@ -327,12 +327,14 @@ void Probe::NewSolveOrbit(Planet *Planets,int planetcount,int step, double epsil
 void Probe::SolveOrbit(Planet *Planets,int planetcount,int step, double h,double tmax) {
     tGroup=new double[maneuver.length+2];
     StepRunOut=false;
+    crashed=false;
     tGroup[0]=0;
     for(int i=0;i<maneuver.length;i++) {
         maneuver.iteratorReach(1+i);
         tGroup[i+1]=maneuver.maneuverIterator->t;
     }
     tGroup[maneuver.length+1]=tmax;
+    EndT=tmax;
     SplineIndex=1;
     ISPRK4ForProbe(Planets,planetcount,step,h,tGroup[1],tGroup[0]);
     SplineIndex++;
@@ -472,6 +474,59 @@ void Probe::Gamma3ProbeUpdate(int next) {
     *(T+next+SplineStart)=*(T+next-1+SplineStart)+dT;
     *(W+next+SplineStart)=*(W+next-1+SplineStart)+dW;
 }
+void Probe::FirstGamma3D(Planet *Planets,int planetcount,int now,const double &h) {
+    TCache=*(T+now+SplineStart)+dT;
+    vplus(Position+now+SplineStart,dq,QCache,3,DataLength);
+    FirstGamma3ProbeAcceleration(Planets,planetcount);
+    vplus(Velocity+now+SplineStart,dp,PCache,3,DataLength);
+    Gamma3W();
+    dW+=theW*0.5*h;
+    WCache=*(W+now+SplineStart)+dW;
+    ndot(acceleration,QCache,h/WCache,3);
+    vplus(dp,QCache,dp,3);
+    dp0+=Vt/WCache;
+    vplus(Velocity+now+SplineStart,dp,PCache,3,DataLength);
+    Gamma3W();
+    dW+=theW*0.5*h;
+}
+void Probe::FirstGamma3ProbeAcceleration(Planet *Planets,int planetcount) {
+    Gamma3ClearAcceleration();
+    for(int i=0;i<planetcount;i++) {
+        FirstGamma3Acceleration(Planets[i]);
+    }
+    for(int i=0;i<3;i++){
+        dAcceleration[i]*=acceleration[i];
+    }
+    dAcceleration[0]+=dAcceleration[1]+dAcceleration[2];
+}
+void Probe::FirstGamma3Acceleration(Planet &Planets) {
+    double r[3],d,sqrtd,e,v[3],g,SingleDAcceleration[9],f;
+    for(int i=0;i<3;i++){
+        r[i]=QCache[i]-Planets.SplinePosition[i].value(TCache);
+        v[i]=Planets.SplineVelocity[i].value(TCache);
+    }
+    d=vdot(r,r,3,1,1);
+    sqrtd=sqrt(d);
+    e=Planets.mass/(d*sqrtd);
+    f=e/d;
+    if(sqrtd<Planets.crashRadius){crashed=true;}
+    for(int i=0;i<3;i++){
+        g=e*r[i];
+        acceleration[i]-=g;
+        Vt+=g*v[i];
+    }
+    for(int i=0;i<3;i++) {
+        for(int j=i;j<3;j++)
+            SingleDAcceleration[i*3+j]=f*3*r[i]*r[j]-(i==j ? e : 0.0);
+    }
+    SingleDAcceleration[3]=SingleDAcceleration[1];
+    SingleDAcceleration[6]=SingleDAcceleration[2];
+    SingleDAcceleration[7]=SingleDAcceleration[5];
+    mvdotminus(SingleDAcceleration,v,dAcceleration,3,3);
+    vselfplus(SingleDAcceleration,MdAcceleration,9);
+    if(!Planets.IsSphericalSymmetry)
+        Gamma3J2Coefficient(acceleration,r,Planets.RotationAxis,Planets.JJ2,d,sqrtd,Vt,v);
+}
 void Probe::Gamma3ISPRK4ForProbe(Planet *Planets,int planetcount,int step, double epsilon,double tmax,double tbegin) {
     double w{1/ (2 - pow(2, 1.0 / 3) )},v{1-2*w};
     double Para[7] = {w / 2,w, (1-w) / 2,v, (1-w) / 2,w,w / 2};
@@ -484,7 +539,7 @@ void Probe::Gamma3ISPRK4ForProbe(Planet *Planets,int planetcount,int step, doubl
     for(int i=0;i<step-1;i++) {
         Gamma3Cleardpdq();
         Gamma3A(i,Para[0]);
-        Gamma3D(Planets,planetcount,i,Para[1]);
+        FirstGamma3D(Planets,planetcount,i,Para[1]);
         Gamma3A(i,Para[2]);
         Gamma3D(Planets,planetcount,i,Para[3]);
         Gamma3A(i,Para[4]);
@@ -495,28 +550,37 @@ void Probe::Gamma3ISPRK4ForProbe(Planet *Planets,int planetcount,int step, doubl
             SplineEnd=i+1+SplineStart;
             SplineDataLength=SplineEnd-SplineStart+1;
             end=true;
-            double solEpsilon[3],solT{T[i+SplineStart]-tmax};
-            solEpsilon[0]=0;
-            solEpsilon[1]=1;
-            solEpsilon[2]=solEpsilon[1]-(solEpsilon[1]-solEpsilon[0])*(T[i+1+SplineStart]-tmax)/(T[i+1+SplineStart]-tmax-solT);
-            solT=T[i+1+SplineStart]-tmax;
-            while(true) {
-                Gamma3Cleardpdq();
-                Gamma3A(i,Para[0]*solEpsilon[2]);
-                Gamma3D(Planets,planetcount,i,Para[1]*solEpsilon[2]);
-                Gamma3A(i,Para[2]*solEpsilon[2]);
-                Gamma3D(Planets,planetcount,i,Para[3]*solEpsilon[2]);
-                Gamma3A(i,Para[4]*solEpsilon[2]);
-                Gamma3D(Planets,planetcount,i,Para[5]*solEpsilon[2]);
-                Gamma3A(i,Para[6]*solEpsilon[2]);
-                Gamma3ProbeUpdate(i+1);
-                if((T[i+1+SplineStart]-tmax<=Ttol)&&(T[i+1+SplineStart]-tmax>=-Ttol))
-                    break;
-                solEpsilon[0]=solEpsilon[1];
-                solEpsilon[1]=solEpsilon[2];
+            if(maneuver.length==SplineIndex){
+                double solEpsilon[3],solT{T[i+SplineStart]-tmax};
+                solEpsilon[0]=0;
+                solEpsilon[1]=1;
                 solEpsilon[2]=solEpsilon[1]-(solEpsilon[1]-solEpsilon[0])*(T[i+1+SplineStart]-tmax)/(T[i+1+SplineStart]-tmax-solT);
                 solT=T[i+1+SplineStart]-tmax;
+                while(true) {
+                    Gamma3Cleardpdq();
+                    Gamma3A(i,Para[0]*solEpsilon[2]);
+                    Gamma3D(Planets,planetcount,i,Para[1]*solEpsilon[2]);
+                    Gamma3A(i,Para[2]*solEpsilon[2]);
+                    Gamma3D(Planets,planetcount,i,Para[3]*solEpsilon[2]);
+                    Gamma3A(i,Para[4]*solEpsilon[2]);
+                    Gamma3D(Planets,planetcount,i,Para[5]*solEpsilon[2]);
+                    Gamma3A(i,Para[6]*solEpsilon[2]);
+                    Gamma3ProbeUpdate(i+1);
+                    if((T[i+1+SplineStart]-tmax<=Ttol)&&(T[i+1+SplineStart]-tmax>=-Ttol))
+                        break;
+                    solEpsilon[0]=solEpsilon[1];
+                    solEpsilon[1]=solEpsilon[2];
+                    solEpsilon[2]=solEpsilon[1]-(solEpsilon[1]-solEpsilon[0])*(T[i+1+SplineStart]-tmax)/(T[i+1+SplineStart]-tmax-solT);
+                    solT=T[i+1+SplineStart]-tmax;
             }
+            }
+            break;
+        }
+        if(crashed) {
+            SplineEnd=i+1+SplineStart;
+            SplineDataLength=SplineEnd-SplineStart+1;
+            end=true;
+            EndT=T[i+1+SplineStart];
             break;
         }
     }
@@ -532,16 +596,18 @@ void Probe::Gamma3SolveOrbit(Planet *Planets,int planetcount,int step, double ep
     dataRefresh();
     tGroup=new double[maneuver.length+2];
     StepRunOut=false;
+    crashed=false;
     tGroup[0]=0;
     for(int i=0;i<maneuver.length;i++) {
         maneuver.iteratorReach(1+i);
         tGroup[i+1]=maneuver.maneuverIterator->t;
     }
     tGroup[maneuver.length+1]=tmax;
+    EndT=tmax;
     SplineIndex=1;
     Gamma3ISPRK4ForProbe(Planets,planetcount,step,epsilon,tGroup[1],tGroup[0]);
     SplineIndex++;
-    for(;(SplineIndex<=1+maneuver.length)&&(!StepRunOut);SplineIndex++) {
+    for(;(SplineIndex<=1+maneuver.length)&&(!StepRunOut)&&(!crashed);SplineIndex++) {
         Gamma3ISPRK4ForProbe(Planets,planetcount,DataLength-SplineEnd-1,epsilon,tGroup[SplineIndex],tGroup[SplineIndex-1]);
     }
     Gamma3ClearPositon();
@@ -597,7 +663,7 @@ void Probe::dataRefresh() {
     safeDelete(SplinePosition);
     safeDelete(SplineVelocity);
 }
-void Gamma3J2Coefficient(double *f,double *r,double *j, double j2, double d,double sqrtd,double &Vt,double *vp) {
+void Gamma3J2Coefficient(double *f,double *r,double *j,const double &  j2,const double & d,const double & sqrtd,double &Vt,double *vp) {
     double c=vdot(j,r,3,1,1),e=j2/(d*d*sqrtd),a=3*c*e,b=3*e*(1-5*c*c/d)*0.5,g;
     for(int i=0;i<3;i++){
         g=a*j[i]+b*r[i];

@@ -1,6 +1,7 @@
 #include "spline.h"
 #include <fstream>
-
+#include <stdexcept>
+#include <iostream>
 void Spline::GetSourceData(int SourceDataLength,const double *SourceDataX,const double *SourceDataY) {
     history=0;
     x=new double[SourceDataLength];
@@ -32,7 +33,7 @@ void Spline::GetSourceData(int SourceDataLength,const double *SourceDataX,const 
         A[i]=(SourceDataY[i+1]-SourceDataY[i])/h[i]-(M[i+1]-M[i])*h[i]/6;
     DataLength=SourceDataLength;
 }
-double Spline::value(double in) {
+double Spline::value(const double & in) {
     for(int j=0;j<DataLength-1;j++) {
         if(x[history]<=in && in<=x[history+1])
             return M[history]*cube(x[history+1]-in)/(h[history]*6)+M[history+1]*cube(in-x[history])/(h[history]*6)+A[history]*(in-x[history])+B[history];
