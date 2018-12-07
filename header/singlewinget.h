@@ -21,7 +21,15 @@ signals:
 public slots:
     void replot();
     void addManueWidget();
+    void closeEvent(QCloseEvent *event) override;
+    void P1Changed(const QString &name);
+    void P2Changed(const QString &name);
+    void OriginChanged(int index);
+    void RotateChanged(int index);
 private:
+    std::string p1,p2;
+    referenceOrigin origin;
+    referenceRotate rotate;
     void clearUpManue();
     QPushButton *plot,*newManeu;
     slidernum *PAndQ[6];

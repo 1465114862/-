@@ -23,11 +23,11 @@
 class Calculator {
 public:
     ClockForTest t{};
-    Calculator(std::string iLocation,int iMaxPlanetNameLength,int iPlanetStep,double iPlanetH);
+    Calculator(std::string iLocation,int iPlanetStep,double iPlanetH);
     void getData();//启动时必调用，行星数据
     void loadPlanet();//读取行星
     void savePlanet();//保存行星
-    void probeRelativeOrbit(int step,int maxwide,int i,int j,double tmax,Probe &probe,double maxCosTheta);//重新换系，得到double数据点
+    void probeRelativeOrbit(int step,int maxwide,int i,int j,double tmax,Probe &probe,double maxCosTheta,referenceOrigin origin,referenceRotate rotate);//重新换系，得到double数据点
     void solveProbe(Probe &probe,int step,double h,double tmax);//重新计算
     void NewSolveProbe(Probe &probe,int step,double epsilon,double tmax);//重新计算
     void Gamma3SolveProbe(Probe &probe,int step,double epsilon,double tmax);//重新计算
@@ -38,12 +38,16 @@ public:
     int getStep(std::string name);//得到画图步数
     std::vector<double> getScaleAndOrigin(std::string name);//得到推荐缩放以及原点,0是缩放，123原点
     GlPlot3D *getPlot3D(std::string name);//调用飞行器
+    int planetToIndex(std::string name);
+    int getPlanetcount();
+    std::string indexToPlanets(int index);
     Probe CenterOfMass{},OriginalProbe{};
 private:
+    std::map<std::string,int> planetIndex;
     std::map<std::string,Probe*> probeIndex;
     std::map<std::string,Probe*>::iterator probeIndexIter;
     std::string Location;
-    int planetcount,MaxPlanetNameLength,PlanetStep;
+    int planetcount,PlanetStep;
     double PlanetH;
     Planet *Planets;
     std::vector <Probe> probes;

@@ -12,7 +12,7 @@ class Probe
 public:
     int DataLength,SplineDataLength,SplineStart,SplineEnd,SplineIndex,history;
     double InitialPosition[3],InitialVelocity[3],*Position,*Velocity,*T,*p0,acceleration[3],dp[3],dq[3],PCache[3],QCache[3],*tGroup,EndT,TCache,P0Cache,dT,dp0,Vt,V,fq,fp,*tau,tauCache,dtau,*W,WCache,dW,theW,MdAcceleration[9],dAcceleration[3],VdAcceleration[3];
-    bool StepRunOut;
+    bool StepRunOut,crashed;
     Spline *SplinePosition,*SplineVelocity;
     Maneuver maneuver;
     std::string name;
@@ -59,6 +59,9 @@ public:
     void Gamma3A(int now,const double &h);
     void Gamma3W();
     void Gamma3D(Planet *Planets,int planetcount,int now,const double &h);
+    void FirstGamma3D(Planet *Planets,int planetcount,int now,const double &h);
+    void FirstGamma3ProbeAcceleration(Planet *Planets,int planetcount);
+    void FirstGamma3Acceleration(Planet &Planets);
     void Gamma3ProbeUpdate(int next);
     void Gamma3ISPRK4ForProbe(Planet *Planets,int planetcount,int step, double epsilon,double tmax,double tbegin);
     void Gamma3SolveOrbit(Planet *Planets,int planetcount,int step, double epsilon,double tmax);
@@ -72,6 +75,6 @@ void safeDelete(T p) {
         p=0;
     }
 }
-void Gamma3J2Coefficient(double *f,double *r,double *j, double j2, double d,double sqrtd,double &Vt,double *vp);
+void Gamma3J2Coefficient(double *f,double *r,double *j,const double & j2, const double & d,const double & sqrtd,double &Vt,double *vp);
 
 #endif // PROBE_H

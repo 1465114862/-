@@ -5,6 +5,9 @@
 #include "calculator.h"
 #include "singlemaneuwinget.h"
 
+class QPushButton;
+class SingleWinget;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -15,12 +18,20 @@ public slots:
     void save();
     void load();
     void setLocation();
-private:
-    void step1();
+    void closeEvent(QCloseEvent *event) override;
     void step2();
+    void errorWidget(QString e);
+signals:
+    void enableAll(bool);
+    void doStep2();
+    void doErrorWidget(QString e);
+private:
+    QPushButton *L,*S;
+    void step1();
     std::string location;
     QLineEdit *lineLoca;
     Calculator *calculate;
+    SingleWinget *widget;
 };
 
 #endif // MAINWINDOW_H

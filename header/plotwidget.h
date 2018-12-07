@@ -15,7 +15,7 @@ class plotWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT
 public:
-    plotWidget(Calculator *icalculate,std::vector<std::string> itoPlot,QWidget *parent = 0);
+    plotWidget(Calculator *icalculate,std::vector<std::string> itoPlot,std::string ip1,std::string ip2,referenceOrigin iorigin,referenceRotate irotate,QWidget *parent = 0);
     ~plotWidget();
     static bool isTransparent() { return m_transparent; }
     static void setTransparent(bool t) { m_transparent = t; }
@@ -23,8 +23,11 @@ public:
     QSize sizeHint() const override;
 public slots:
     void cleanup();
+    void reference(std::string ip1,std::string ip2,referenceOrigin iorigin,referenceRotate irotate);
     void rePlot();
+    void rePlotResult();
 signals:
+    void rePlotResultReady(bool);
 protected:
     void initializeGL() override;
     void paintGL() override;
@@ -33,6 +36,9 @@ protected:
     void mouseMoveEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
 private:
+    int p1,p2;
+    referenceRotate rotate;
+    referenceOrigin origin;
     void resetScaleAndShift();
     std::vector<double> scaleAndShift;
     std::vector<std::string> toPlot;

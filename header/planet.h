@@ -3,8 +3,6 @@
 
 #include "spline.h"
 
-//txt文档读取单词
-void GetWord(std::fstream &fs,char *word,int MaxLength);
 //得到行星数量(pcount.txt)
 int GetPlanetCount(std::string Location);
 //行星类
@@ -13,8 +11,9 @@ class Planet
 public:
     int MaxPlanetNameLength,DataLength;
     bool IsSoibody,IsSphericalSymmetry;
-    char *name;
-    double mass,j2,J2,JJ2,radius,RotationAxis[3],RawPosition[3],RawVelocity[3],InitialPosition[3],InitialVelocity[3],*Position,*Velocity,acceleration[3],dp[3],dq[3],PCache[3],QCache[3];
+    //char *name;
+    std::string name;
+    double crashRadius,mass,j2,J2,JJ2,radius,RotationAxis[3],RawPosition[3],RawVelocity[3],InitialPosition[3],InitialVelocity[3],*Position,*Velocity,acceleration[3],dp[3],dq[3],PCache[3],QCache[3];
     Spline SplinePosition[3],SplineVelocity[3];
     void GetMaxPlanetNameLength(int length);//初始化名字最长长度
     void GetName(std::fstream &fs);//读取名字
