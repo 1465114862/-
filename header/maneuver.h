@@ -6,6 +6,8 @@
 class SingleManeuver {
 public:
     double t,v[3];
+    SingleManeuver();
+    SingleManeuver operator =(SingleManeuver& str);
 };
 class Maneuver {
 public:
@@ -19,6 +21,7 @@ public:
     void iteratorP();
     void iteratorM();
     void iteratorReach(int which);
+    void cut(double tmin,double tmax);
     Maneuver& operator =(Maneuver& str);
 };
 

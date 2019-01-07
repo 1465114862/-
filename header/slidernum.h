@@ -25,6 +25,7 @@ public slots:
     void timerCreate();
     void timerDisable();
     void textChangeValue();
+    void updateValue();
 signals:
     void valueChanged(QString num);
 private:

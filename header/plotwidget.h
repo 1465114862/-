@@ -15,17 +15,21 @@ class plotWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT
 public:
-    plotWidget(Calculator *icalculate,std::vector<std::string> itoPlot,std::string ip1,std::string ip2,referenceOrigin iorigin,referenceRotate irotate,QWidget *parent = 0);
+    plotWidget(Calculator *icalculate,std::vector<std::string> itoPlot,std::string ip1,std::string ip2,referenceOrigin iorigin,referenceRotate irotate,double itmin,QWidget *parent = 0);
     ~plotWidget();
     static bool isTransparent() { return m_transparent; }
     static void setTransparent(bool t) { m_transparent = t; }
     QSize minimumSizeHint() const override;
     QSize sizeHint() const override;
+    void setSolver(int istep,double itolerance,double itmin,double itmax,int imethod);
+    void setReference(std::string ip1,std::string ip2,std::string ip3,referenceOrigin iorigin,referenceRotate irotate);
 public slots:
     void cleanup();
-    void reference(std::string ip1,std::string ip2,referenceOrigin iorigin,referenceRotate irotate);
+    void reference();
     void rePlot();
     void rePlotResult();
+    void resetScaleAndShiftHint();
+    void resetScaleAndShiftByName(std::string name);
 signals:
     void rePlotResultReady(bool);
 protected:
@@ -36,11 +40,12 @@ protected:
     void mouseMoveEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
 private:
-    int p1,p2;
+    std::string p1,p2;
     referenceRotate rotate;
     referenceOrigin origin;
     void resetScaleAndShift();
     std::vector<double> scaleAndShift;
+    std::vector<std::string> toDeletePlot;
     std::vector<std::string> toPlot;
     Calculator *calculate;
     void resetBuffer();
@@ -61,7 +66,10 @@ private:
     QMatrix4x4 m_camera;
     QMatrix4x4 m_world;
     static bool m_transparent;
-    GLfloat *color;
+    GLfloat *color{nullptr};
+    int step,method;
+    double tmax,tolerance,tmin;
+    void solve();
 };
 
 #endif // PLOTWIDGET_H

@@ -29,9 +29,9 @@ private:
     QPushButton *L,*S;
     void step1();
     std::string location;
-    QLineEdit *lineLoca;
+    QLineEdit *lineLoca,*planetStep,*planetH;
     Calculator *calculate;
-    SingleWinget *widget;
+    SingleWinget *widget{nullptr};
 };
 
 #endif // MAINWINDOW_H

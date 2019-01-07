@@ -31,7 +31,6 @@ void mdot(const double *inm1,const double *inm2,double *outm,int row,int rank);
 void cross3(const double *in1,const double *in2,double *out,int in1h=1,int in2h=1,int outh=1);
 //非球引力场J2修正
 void J2Coefficient(double *f,double *r,double *j, double j2, double d,double sqrtd);
-void NewJ2Coefficient(double *f,double *r,double *j, double j2, double d,double sqrtd,double &V,double &Vt,double *vp);
 //最大值或最小值
 double FindMinOrMax(bool Max,const double *a,int length,int step=1);
 

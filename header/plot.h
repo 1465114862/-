@@ -14,18 +14,20 @@ public:
 class GlPlot3D
 {
 public:
+    ~GlPlot3D();
     void plot();//得到所有绘图数据点
-    GlPlot3D(std::function<double(double)> &ifx,std::function<double(double)> &ify,std::function<double(double)> &ifz,double itmax,int imaxwide,int iminstep,double iminCosTheta);//初始化指定函数，参数最大值，最大宽度限制，绘图点数
-    GLfloat *normedT,*Vbo;//OpenGL绘图所需的顶点
-    double *vertices{};
+    GlPlot3D(std::function<double(double)> &ifx,std::function<double(double)> &ify,std::function<double(double)> &ifz,int imaxwide,int iminstep,double iminCosTheta,std::vector<double> iTGroup);
+    GLfloat *normedT{nullptr},*Vbo{nullptr};//OpenGL绘图所需的顶点
+    double *vertices{nullptr};
     int Step();//顶点数
     std::list<double4> data;
     std::list<double4>::iterator dataIterator;
     std::vector<double> getScaleAndOrigin();
     void shift(std::vector<double> in);
 private:
+    std::vector<double> tGroup;
     int step,maxwide,minstep;
-    double tmax,minCosTheta;
+    double minCosTheta;
     std::function<double(double)> *fx,*fy,*fz;
     void setVertices(double *a,double *b,double *c);
     bool vCosTheta3(const double * r1,const double *r2);
