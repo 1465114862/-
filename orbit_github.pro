@@ -41,7 +41,11 @@ SOURCES += \
     singlemaneuwinget.cpp \
     singlewinget.cpp \
     slidernum.cpp \
-    spline.cpp
+    spline.cpp \
+    abstractpoint.cpp \
+    splineiterator.cpp \
+    Swarm.cpp \
+    psowidget.cpp
 
 HEADERS += \
     calculator.h \
@@ -59,7 +63,11 @@ HEADERS += \
     singlemaneuwinget.h \
     singlewinget.h \
     slidernum.h \
-    spline.h
+    spline.h \
+    abstractpoint.h \
+    splineiterator.h \
+    Swarm.h \
+    psowidget.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
