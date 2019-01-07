@@ -4,6 +4,10 @@
 #include <fstream>
 #include <stdexcept>
 //得到行星数量(pcount.txt)
+Planet::~Planet() {
+    if(!Position){delete [] Position;}
+    if(!Velocity){delete [] Velocity;}
+}
 int GetPlanetCount(std::string Location) {
     int planetcount;
     std::fstream indata;
@@ -109,28 +113,3 @@ double Planet::velocity(int dimension,double t) {
     return SplineVelocity[dimension].value(t);
 }
 
-/*-------------------------------S&L----------------------------------------*/
-//保存所有行星数据
-void SaveAll(Planet *Planets,int planetcount,std::string Location){
-    std::string str=Location+R"(\splines.dat)";
-    const char *location=str.data();
-    remove(location);
-    std::fstream outdata;
-    outdata.open(str, std::ios::out | std::ios::binary);
-    if (!outdata.is_open())
-        throw std::runtime_error{"无法保存行星轨道"};
-    for(int i=0;i<planetcount;i++)
-        Planets[i].save(outdata);
-    outdata.close();
-}
-//读取所有行星数据
-void LoadAll(Planet *Planets,int planetcount,std::string Location){
-    std::fstream indata;
-    indata.open(Location+R"(\splines.dat)", std::ios::in | std::ios::binary);
-    if (!indata.is_open())
-        throw std::runtime_error{"无法读取行星轨道（您保存过吗）"};
-    for(int i=0;i<planetcount;i++)
-        Planets[i].load(indata);
-    indata.close();
-}
-/*-------------------------------S&L----------------------------------------*/

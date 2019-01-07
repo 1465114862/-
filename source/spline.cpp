@@ -2,7 +2,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <iostream>
-void Spline::GetSourceData(int SourceDataLength,const double *SourceDataX,const double *SourceDataY) {
+void Spline::GetSourceData(const int & SourceDataLength,const double *SourceDataX,const double *SourceDataY) {
     history=0;
     x=new double[SourceDataLength];
     h=new double[SourceDataLength-1];
@@ -36,7 +36,7 @@ void Spline::GetSourceData(int SourceDataLength,const double *SourceDataX,const 
 double Spline::value(const double & in) {
     for(int j=0;j<DataLength-1;j++) {
         if(x[history]<=in && in<=x[history+1])
-            return M[history]*cube(x[history+1]-in)/(h[history]*6)+M[history+1]*cube(in-x[history])/(h[history]*6)+A[history]*(in-x[history])+B[history];
+            return M[history]*cube(x[history+1]-in)/(h[history]*6)+M[history+1]*cube(in-x[history])/(h[history]*6)+A[history]*(in-x[history])+B[history];///问题
         if(in>x[history+1])
             history++;
         if(in<x[history])
@@ -45,24 +45,32 @@ double Spline::value(const double & in) {
     return 0;
 }
 void Spline::save(std::fstream &fs) {
-    fs.write((const char *)&DataLength, sizeof(int));
-    fs.write((const char *)M, sizeof(double)*DataLength);
-    fs.write((const char *)x, sizeof(double)*DataLength);
-    fs.write((const char *)A, sizeof(double)*(DataLength-1));
-    fs.write((const char *)B, sizeof(double)*(DataLength-1));
+    fs.write(reinterpret_cast<char*>(&DataLength), sizeof(int));
+    fs.write(reinterpret_cast<char*>(M), sizeof(double)*DataLength);
+    fs.write(reinterpret_cast<char*>(x), sizeof(double)*DataLength);
+    fs.write(reinterpret_cast<char*>(A), sizeof(double)*(DataLength-1));
+    fs.write(reinterpret_cast<char*>(B), sizeof(double)*(DataLength-1));
 }
 void Spline::load(std::fstream &fs) {
-    fs.read((char *)&DataLength, sizeof(int));
+    fs.read(reinterpret_cast<char*>(&DataLength), sizeof(int));
     history=0;
     x=new double[DataLength];
     h=new double[DataLength-1];
     M=new double[DataLength];
     A=new double[DataLength-1];
     B=new double[DataLength-1];
-    fs.read((char *)M, sizeof(double)*DataLength);
-    fs.read((char *)x, sizeof(double)*DataLength);
-    fs.read((char *)A, sizeof(double)*(DataLength-1));
-    fs.read((char *)B, sizeof(double)*(DataLength-1));
+    fs.read(reinterpret_cast<char*>(M), sizeof(double)*DataLength);
+    fs.read(reinterpret_cast<char*>(x), sizeof(double)*DataLength);
+    fs.read(reinterpret_cast<char*>(A), sizeof(double)*(DataLength-1));
+    fs.read(reinterpret_cast<char*>(B), sizeof(double)*(DataLength-1));
     for(int i=0;i<DataLength-1;i++)
         h[i]=x[i+1]-x[i];
+}
+
+Spline::~Spline() {
+    if(h) {delete [] h;}
+    if(x) {delete [] x;}
+    if(A) {delete [] A;}
+    if(B) {delete [] B;}
+    if(M) {delete [] M;}
 }

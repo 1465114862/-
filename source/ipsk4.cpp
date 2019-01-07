@@ -66,7 +66,7 @@ void ClearAllPositon(Planet *Planets,int planetcount) {
 }
 //对于行星的ISPRK4求解器
 void ISPRK4ForPlanets(Planet *Planets,int planetcount,int step, double h) {
-    int revesStep=int(step/100)+1,rStep=step+revesStep;
+    int revesStep=int(step/100)+1,rStep=step+revesStep*2;
     double w = (2 + pow(2, 1.0 / 3) + 1 / pow(2, 1.0 / 3)) / 3,XSource[rStep];
     double v = 1 - 2 * w,b[4] = {w, v, w, 0},B[4] = {w / 2, (w + v) / 2, (w + v) / 2, w / 2},hB[4],hb[4];
     for(int i=0;i<rStep;i++)

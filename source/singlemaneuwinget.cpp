@@ -5,8 +5,10 @@
 #include "mainwindow.h"
 #include <QMessageBox>
 
-SingleManeuWinget::SingleManeuWinget(QWidget *parent)
+SingleManeuWinget::SingleManeuWinget(SingleManeuWinget*& ihere,QWidget *parent)
+    : here(ihere)
 {
+    setAttribute(Qt::WA_DeleteOnClose);
     closed=false;
     maneu.t=0;
     maneu.v[0]=0;
@@ -28,10 +30,23 @@ SingleManeuWinget::SingleManeuWinget(QWidget *parent)
 
 void SingleManeuWinget::closeEvent(QCloseEvent *event) {
     closed=true;
+    here=nullptr;
 }
 
 bool SingleManeuWinget::isClosed() {return closed;}
 
-SingleManeuver SingleManeuWinget::getManeu() {
+const SingleManeuver & SingleManeuWinget::getManeu() {
     return maneu;
 }
+
+void SingleManeuWinget::setManeu(SingleManeuver in) {
+    maneu.t=in.t;
+    t->updateValue();
+    maneu.v[0]=in.v[0];
+    vx->updateValue();
+    maneu.v[1]=in.v[1];
+    vy->updateValue();
+    maneu.v[2]=in.v[2];
+    vz->updateValue();
+}
+//清理掉close

@@ -4,12 +4,13 @@
 void ClockForTest::start(){
     Xstart=clock();
 }
-void ClockForTest::finish() {
+double ClockForTest::finish() {
     Xfinish = clock();
     duration = (double)(Xfinish - Xstart) / CLOCKS_PER_SEC;
-    std::cout << duration << std::endl;
+    return duration;
 }
-void ClockForTest::finishandstart() {
-    finish();
+double ClockForTest::finishandstart() {
+    double r{finish()};
     start();
+    return r;
 }

@@ -71,6 +71,10 @@ void slidernum::addChange(double iadd) {
 
 void slidernum::changeValue() {
     (*value)+=(add>0 ? times*pow(10,add/500) : -times*pow(10,-add/500));
+    updateValue();
+}
+
+void slidernum::updateValue() {
     QString num;
     num.setNum((*value),'g',15);
     emit valueChanged(num);

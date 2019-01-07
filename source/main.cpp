@@ -10,8 +10,8 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    QCoreApplication::setApplicationName("HALO!");
-    QCoreApplication::setOrganizationName("QtProject");
+    QCoreApplication::setApplicationName("轨道规划");
+    QCoreApplication::setOrganizationName("PKU");
     QCoreApplication::setApplicationVersion(QT_VERSION_STR);
     QCommandLineParser parser;
     parser.setApplicationDescription(QCoreApplication::applicationName());
@@ -43,8 +43,10 @@ int main(int argc, char *argv[])
     int desktopArea = QApplication::desktop()->width() *
                      QApplication::desktop()->height();
     int widgetArea = mainWindow.width() * mainWindow.height();
-    if (((float)widgetArea / (float)desktopArea) < 0.75f)
+    if (((float)widgetArea / (float)desktopArea) < 0.75f){
         mainWindow.show();
+        mainWindow.move(QApplication::desktop()->width()/4,QApplication::desktop()->height()/8);
+    }
     else
         mainWindow.showMaximized();
     return app.exec();

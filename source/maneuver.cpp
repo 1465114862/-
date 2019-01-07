@@ -1,5 +1,17 @@
 #include "maneuver.h"
-
+#include <iostream>
+SingleManeuver::SingleManeuver() {
+    t=0;
+    v[0]=0;
+    v[1]=0;
+    v[2]=0;
+}
+SingleManeuver SingleManeuver::operator =(SingleManeuver& str) {
+    t=str.t;
+    v[0]=str.v[0];
+    v[1]=str.v[1];
+    v[2]=str.v[2];
+}
 void Maneuver::add(SingleManeuver singleManeuver) {
     maneuver.push_back(singleManeuver);
     length++;
@@ -62,6 +74,14 @@ void Maneuver::resetT(int which) {
 void Maneuver::reset(SingleManeuver singleManeuver) {
     *maneuverIterator=singleManeuver;
     resetT(now);
+}
+void Maneuver::cut(double tmin,double tmax) {
+    maneuver.remove_if([&](const SingleManeuver & single)->bool{
+        return (single.t<=tmin)||(single.t>=tmax);
+                       });
+    maneuverIterator=maneuver.begin();
+    now=1;
+    length=maneuver.size();
 }
 
 Maneuver& Maneuver::operator =(Maneuver& str){

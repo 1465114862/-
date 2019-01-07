@@ -22,31 +22,40 @@ void GLCoordinatesTransform(const double *a,const double *b,const double *c,GLfl
     }
 }
 void GlPlot3D::plot() {
-    double h=tmax/(minstep-1),r1[3],r2[3],rtmax=1/tmax;
-    double4 cache,cache1,cache2;
-    step=minstep;
+    if(vertices){delete [] vertices;vertices=nullptr;}
+    if(normedT){delete [] normedT;normedT=nullptr;}
+    if(Vbo){delete [] Vbo;Vbo=nullptr;}
     data.clear();
+    double rtmax=1/(tGroup.back()-tGroup.front());
+    for(int j=0;j<tGroup.size()-1;j++){
+    double h=(tGroup.at(j+1)-tGroup.at(j))/(minstep-1),r1[3],r2[3];
+    double4 cache,cache1,cache2;
+    int tempsize;
+    step=minstep;
+    tempsize=data.size();
     try {
         for(int i=0;i<step-1;i++) {
-            cache.v[0]=h*i;
+            cache.v[0]=h*i+tGroup.at(j);
             cache.v[1]=(*fx)(cache.v[0]);
             cache.v[2]=(*fy)(cache.v[0]);
             cache.v[3]=(*fz)(cache.v[0]);
             data.push_back(cache);
         }
-        cache.v[0]=tmax;
+        cache.v[0]=tGroup.at(j+1);
         cache.v[1]=(*fx)(cache.v[0]);
         cache.v[2]=(*fy)(cache.v[0]);
         cache.v[3]=(*fz)(cache.v[0]);
         data.push_back(cache);
     } catch(std::out_of_range) {}
-    dataIterator=data.begin();
+    dataIterator=data.begin();//
+    advance(dataIterator, tempsize);//
     cache1=*(dataIterator);
     dataIterator++;
     cache2=*(dataIterator);
     vminus(&(cache2.v[1]),&(cache1.v[1]),r2,3);
     dataIterator++;
-    for(;dataIterator!=data.end();dataIterator++) {
+    int safe{0};
+    for(;(dataIterator!=data.end())&&(safe<=100000);dataIterator++) {
         vequ(r2,r1,3);
         vminus(&(dataIterator->v[1]),&(cache2.v[1]),r2,3);
         if(!vCosTheta3(r1,r2)) {
@@ -65,11 +74,14 @@ void GlPlot3D::plot() {
             cache2=cache;
             vminus(&(cache2.v[1]),&(cache1.v[1]),r2,3);
             dataIterator--;
+            safe+=2;
         }
         else {
             cache1=cache2;
             cache2=*(dataIterator);
         }
+    }
+
     }
     step=data.size();
     vertices=new double[3*step];
@@ -92,20 +104,24 @@ void GlPlot3D::plot() {
        Vbo[i*6+5]= 0.0f;
    }
 }
-GlPlot3D::GlPlot3D(std::function<double(double)> &ifx,std::function<double(double)> &ify,std::function<double(double)> &ifz,double itmax,int imaxwide,int iminstep,double iminCosTheta) {
+GlPlot3D::GlPlot3D(std::function<double(double)> &ifx,std::function<double(double)> &ify,std::function<double(double)> &ifz,int imaxwide,int iminstep,double iminCosTheta,std::vector<double> iTGroup) {
     fx=&ifx;
     fy=&ify;
     fz=&ifz;
-    tmax=itmax;
+    tGroup=iTGroup;
+
+    //tmin=itmin;
+    //tmax=itmax;
     maxwide=imaxwide;
     minstep=iminstep;
     minCosTheta=iminCosTheta;
+
 };
 int GlPlot3D::Step() {
     return step;
 };
 bool GlPlot3D::vCosTheta3(const double * r1,const double *r2) {
-    return (vdot(r1,r2,3)/(sqrt(vdot(r1,r1,3))*sqrt(vdot(r2,r2,3)))>minCosTheta);
+    return (!(r1[0]==r2[0]&&r1[1]==r2[1]&&r1[2]==r2[2]))?(vdot(r1,r2,3)/(sqrt(vdot(r1,r1,3))*sqrt(vdot(r2,r2,3)))>minCosTheta):1;
 }
 void GlPlot3D::setVertices(double *a,double *b,double *c) {
     for(int i=0;i<step;i++) {
@@ -148,4 +164,9 @@ void GlPlot3D::shift(std::vector<double> in) {
         Vbo[i*6+1]= GLfloat((vertices[i*3+1]-in[2])*in[0]);
         Vbo[i*6+2]= GLfloat((vertices[i*3+2]-in[3])*in[0]);
     }
+}
+GlPlot3D::~GlPlot3D() {
+    if(vertices){delete [] vertices;}
+    if(normedT){delete [] normedT;}
+    if(Vbo){delete [] Vbo;}
 }

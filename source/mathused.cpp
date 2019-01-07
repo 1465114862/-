@@ -92,15 +92,6 @@ void J2Coefficient(double *f,double *r,double *j, double j2, double d,double sqr
     for(int i=0;i<3;i++)
         f[i]+=a*j[i]+b*r[i];
 }
-void NewJ2Coefficient(double *f,double *r,double *j, double j2, double d,double sqrtd,double &V,double &Vt,double *vp) {
-    double c=vdot(j,r,3,1,1),e=j2/(d*d*sqrtd),a=3*c*e,b=3*e*(1-5*c*c/d)*0.5,g;
-    V+=e*0.5*(3*c*c-d);
-    for(int i=0;i<3;i++){
-        g=a*j[i]+b*r[i];
-        Vt+=g*vp[i];
-        f[i]+=g;
-    }
-}
 //最大值或最小值
 double FindMinOrMax(bool Max,const double *a,int length,int step) {
     double cache=a[0];

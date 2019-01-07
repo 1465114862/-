@@ -9,22 +9,31 @@
 
 bool plotWidget::m_transparent = false;
 
-plotWidget::plotWidget(Calculator *icalculate,std::vector<std::string> itoPlot,std::string ip1,std::string ip2,referenceOrigin iorigin,referenceRotate irotate,QWidget *parent)
+plotWidget::plotWidget(Calculator *icalculate,std::vector<std::string> itoPlot,std::string ip1,std::string ip2,referenceOrigin iorigin,referenceRotate irotate,double itmin,QWidget *parent)
     : QOpenGLWidget(parent),
       toPlot(itoPlot),
       calculate(icalculate),
       m_program(0),
       origin(iorigin),
-      rotate(irotate)
+      rotate(irotate),
+      tmin(itmin)
 {
-    p1=calculate->planetToIndex(ip1);
-    p2=calculate->planetToIndex(ip2);
+    p1=ip1;
+    p2=ip2;
     m_core = QSurfaceFormat::defaultFormat().profile() == QSurfaceFormat::CoreProfile;
     if (m_transparent) {
         QSurfaceFormat fmt = format();
         fmt.setAlphaBufferSize(8);
         setFormat(fmt);
     }
+}
+
+void plotWidget::setSolver(int istep,double itolerance,double itmin,double itmax,int imethod) {
+    step=istep;
+    tmin=itmin;
+    tmax=itmax;
+    tolerance=itolerance;
+    method=imethod;
 }
 
 plotWidget::~plotWidget()
@@ -53,20 +62,45 @@ void plotWidget::cleanup()
     doneCurrent();
 }
 
+void plotWidget::resetScaleAndShiftHint() {
+    scaleAndShift=calculate->getScaleAndOrigin(toPlot.at(0));
+    m_program->bind();
+    resetScaleAndShift();
+    resetBuffer();
+    m_program->release();
+    update();
+}
+
+void plotWidget::resetScaleAndShiftByName(std::string name) {
+    ProbeCoordinatesTransform Orbit_1(calculate->getAbstractPoint(p1),calculate->getAbstractPoint(p2),calculate->getAbstractPoint(name),origin,rotate,tmin);
+    for(int i=0;i<3;i++)
+        scaleAndShift[i+1]=Orbit_1.value(i,tmin);
+    m_program->bind();
+    resetScaleAndShift();
+    resetBuffer();
+    m_program->release();
+    update();
+}
+
 void plotWidget::resetScaleAndShift()
 {
     for(std::string i : toPlot)
-        calculate->getProbe(i)->probeplot->shift(scaleAndShift);
+        calculate->getAbstractPoint(i)->plot->shift(scaleAndShift);
 }
 
-void plotWidget::reference(std::string ip1,std::string ip2,referenceOrigin iorigin,referenceRotate irotate){
-    /*calculate->probeRelativeOrbit(200,1,6,24,calculate->getProbe(toPlot[0])->EndT,*(calculate->getProbe(toPlot[0])),0.9986295347545738,P1,P1toP2);*/
-    p1=calculate->planetToIndex(ip1);
-    p2=calculate->planetToIndex(ip2);
+void plotWidget::setReference(std::string ip1,std::string ip2,std::string ip3,referenceOrigin iorigin,referenceRotate irotate) {
+    p1=ip1;
+    p2=ip2;
+    toDeletePlot.push_back(toPlot[0]);
+    toPlot[0]=ip3;
     origin=iorigin;
     rotate=irotate;
-    calculate->probeRelativeOrbit(200,1,p1,p2,calculate->getProbe(toPlot[0])->EndT,*(calculate->getProbe(toPlot[0])),0.9986295347545738,origin,rotate);
-    scaleAndShift=calculate->getScaleAndOrigin(toPlot.at(0));
+}
+
+void plotWidget::reference(){
+    for(std::vector<std::string>::iterator i=toDeletePlot.begin();i!=toDeletePlot.end();i++)
+        if(calculate->getAbstractPoint(*i)->plot) {delete calculate->getAbstractPoint(*i)->plot;calculate->getAbstractPoint(*i)->plot=nullptr;toDeletePlot.erase(i);i--;}
+    calculate->probeRelativeOrbit(200,1,p1,p2,toPlot[0],0.9986295347545738,origin,rotate,tmin);
     resetScaleAndShift();
     m_program->bind();
     QOpenGLVertexArrayObject::Binder vaoBinder(&m_vao);
@@ -79,17 +113,28 @@ void plotWidget::reference(std::string ip1,std::string ip2,referenceOrigin iorig
     update();
 }
 
+void plotWidget::solve() {
+    switch (method) {
+    case 0:
+        calculate->Gamma3SolveProbe(*(calculate->getProbe(toPlot[0])),step,tolerance,tmin,tmax);
+        calculate->probeRelativeOrbit(200,1,p1,p2,toPlot[0],0.9986295347545738,origin,rotate,tmin);////
+        break;
+    case 1:
+        calculate->solveProbe(*(calculate->getProbe(toPlot[0])),step,tolerance,tmin,tmax);
+        calculate->probeRelativeOrbit(200,1,p1,p2,toPlot[0],0.9986295347545738,origin,rotate,tmin);////
+        break;
+    }
+}
+
 void plotWidget::rePlot() {
     QThread *calculateThread=QThread::create([&]()->void{
-        calculate->Gamma3SolveProbe(*(calculate->getProbe(toPlot[0])),15000,0.0645462/1.5,864*40500);
-        calculate->probeRelativeOrbit(200,1,p1,p2,calculate->getProbe(toPlot[0])->EndT,*(calculate->getProbe(toPlot[0])),0.9986295347545738,origin,rotate);});
+        solve();});
     connect(calculateThread, &QThread::finished, this, &plotWidget::rePlotResult);
     connect(calculateThread, &QThread::finished, calculateThread, &QObject::deleteLater);
     calculateThread->start();
 }
 
 void plotWidget::rePlotResult() {
-    scaleAndShift=calculate->getScaleAndOrigin(toPlot.at(0));
     resetScaleAndShift();
     m_program->bind();
     QOpenGLVertexArrayObject::Binder vaoBinder(&m_vao);
@@ -120,7 +165,6 @@ static const char *fragmentShaderSource =
     "   gl_FragColor = col;\n"
     "}\n";
 
-
 void plotWidget::initializeGL()
 {
     connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &plotWidget::cleanup);
@@ -135,8 +179,7 @@ void plotWidget::initializeGL()
     m_program->bind();
     m_projMatrixLoc = m_program->uniformLocation("projMatrix");
     m_mvMatrixLoc = m_program->uniformLocation("mvMatrix");
-    calculate->Gamma3SolveProbe(*(calculate->getProbe(toPlot[0])),15000,0.0645462/1.5,864*40500);
-    calculate->probeRelativeOrbit(200,1,p1,p2,calculate->getProbe(toPlot[0])->EndT,*(calculate->getProbe(toPlot[0])),0.9986295347545738,origin,rotate);
+    solve();
     m_vao.create();
     QOpenGLVertexArrayObject::Binder vaoBinder(&m_vao);
     m_vbo.create();
